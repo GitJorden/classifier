@@ -6,47 +6,12 @@ import scipy.io
 import re
 
 
-def DropExploreColumns(dataFrame):
-    dataFrame = dataFrame.drop(['TrialId'], axis=1)
-    dataFrame = dataFrame.drop(['LeftMovieU'], axis=1)
-    dataFrame = dataFrame.drop(['RightMovieU'], axis=1)
-    dataFrame = dataFrame.drop(['LeftMovieD'], axis=1)
-    dataFrame = dataFrame.drop(['RightMovieD'], axis=1)
-    dataFrame = dataFrame.drop(['AOIStimulus'], axis=1)
-    dataFrame = dataFrame.drop(['UserDefined_1'], axis=1)
+def Process(file):
+    fileToread = 'in_preprocess\\' + file
+    dataFrame = pandas.read_csv(fileToread)
 
-    return dataFrame
+    dataFrame.TETTime = dataFrame['TETTime'] - dataFrame['TETTime'].iloc[0]
 
-
-def DropGapOverLapColumns(dataFrame):
-    dataFrame = dataFrame.drop(['AOI1'], axis=1)
-    dataFrame = dataFrame.drop(['AOI2'], axis=1)
-    dataFrame = dataFrame.drop(['AOI'], axis=1)
-
-    return dataFrame
-
-
-def DropRedColumns(dataFrame):
-    dataFrame = dataFrame.drop(['TrialProc'], axis=1)
-    dataFrame = dataFrame.drop(['AOI1'], axis=1)
-    dataFrame = dataFrame.drop(['AOI2'], axis=1)
-    dataFrame = dataFrame.drop(['AOI'], axis=1)
-    dataFrame = dataFrame.drop(['UserDefined_1'], axis=1)
-
-    return dataFrame
-
-
-def DropSpeechColumns(dataFrame):
-    dataFrame = dataFrame.drop(['TrialId'], axis=1)
-    dataFrame = dataFrame.drop(['LeftMovie'], axis=1)
-    dataFrame = dataFrame.drop(['RightMovie'], axis=1)
-    dataFrame = dataFrame.drop(['AOI'], axis=1)
-    dataFrame = dataFrame.drop(['UserDefined_1'], axis=1)
-
-    return dataFrame
-
-
-def DropCommonColumns(dataFrame):
     dataFrame = dataFrame.drop(['Subject'], axis=1)
     dataFrame = dataFrame.drop(['Session'], axis=1)
     dataFrame = dataFrame.drop(['ID'], axis=1)
@@ -55,93 +20,24 @@ def DropCommonColumns(dataFrame):
     dataFrame = dataFrame.drop(['TimestampSec'], axis=1)
     dataFrame = dataFrame.drop(['TimestampMicrosec'], axis=1)
 
+    dataFrame = dataFrame.drop(['LeftMovieU'], axis=1)
+    dataFrame = dataFrame.drop(['RightMovieU'], axis=1)
+    dataFrame = dataFrame.drop(['LeftMovieD'], axis=1)
+    dataFrame = dataFrame.drop(['RightMovieD'], axis=1)
+    dataFrame = dataFrame.drop(['AOIStimulus'], axis=1)
+
     dataFrame = dataFrame.drop(['CRESP'], axis=1)
     dataFrame = dataFrame.drop(['RESP'], axis=1)
     dataFrame = dataFrame.drop(['ACC'], axis=1)
     dataFrame = dataFrame.drop(['RT'], axis=1)
+    dataFrame = dataFrame.drop(['UserDefined_1'], axis=1)
 
-    return dataFrame
-
-
-def DropColumnsByType(preprocessType, dataFrame):
-    if preprocessType == 'Explore':
-        dataFrame = DropExploreColumns(dataFrame)
-    if preprocessType == 'GapOverLap':
-        dataFrame = DropGapOverLapColumns(dataFrame)
-    if preprocessType == 'Red':
-        dataFrame = DropRedColumns(dataFrame)
-    if preprocessType == 'Speech':
-        dataFrame = DropSpeechColumns(dataFrame)
-
-    return dataFrame
-
-
-def GetTrialProcNumber(row):
-    temp = re.findall(r'\d+', row)
-    trialProcNum = list(map(int, temp))
-    if not trialProcNum:
-        return 0
-    else:
-        return list(map(int, temp)).pop()
-
-
-def SetExploreRow(row):
-    row['TrialProc'] = GetTrialProcNumber(row['TrialProc'])
-    return row
-
-
-def SetGapOverLapRow(row):
-
-    return row
-
-
-def SetRedRow(row):
-
-    return row
-
-
-def SetSpeechRow(row):
-
-    return row
-
-
-def SetRowByType(preprocessType, row):
-    if preprocessType == 'Explore':
-        dataFrame = SetExploreRow(row)
-    if preprocessType == 'GapOverLap':
-        dataFrame = SetGapOverLapRow(row)
-    if preprocessType == 'Red':
-        dataFrame = SetRedRow(row)
-    if preprocessType == 'Speech':
-        dataFrame = SetSpeechRow(row)
-
-    return dataFrame
-
-
-def Process(preprocessType, file):
-    dataFrame = pandas.read_excel(file)
-
-    dataFrame.TETTime = dataFrame['TETTime'] - dataFrame['TETTime'].iloc[0]
-
-    dataFrame = DropCommonColumns(dataFrame)
-    dataFrame = DropColumnsByType(preprocessType)
+    dataFrame = dataFrame.drop(['TrialProc'], axis=1)
+    dataFrame = dataFrame.drop(['AOI'], axis=1)
+    dataFrame = dataFrame.drop(['AOI1'], axis=1)
+    dataFrame = dataFrame.drop(['AOI2'], axis=1)
 
     for index, row in dataFrame.iterrows():
-        row = SetRowByType(preprocessType, row)
-
-        if pandas.isna(row['AOI']):
-            dataFrame['AOI'][index] = 0
-        elif row['AOI'] == '1':
-            dataFrame['AOI'][index] = 1
-        elif row['AOI'] == '2':
-            dataFrame['AOI'][index] = 2
-        elif row['AOI'] == '3':
-            dataFrame['AOI'][index] = 3
-        elif row['AOI'] == '4':
-            dataFrame['AOI'][index] = 4
-        elif row['AOI'] == 'else':
-            dataFrame['AOI'][index] = 5
-
         insertRightEyeData = False
         insertLeftEyeData = False
 
@@ -246,9 +142,9 @@ def GetDataColumns(dataFrame):
     ValidityRightEye = dataFrame['ValidityRightEye']
 
     TrialId = dataFrame['TrialId']
+    Images = dataFrame['Images']
+    AOIStimulus = dataFrame['AOIStimulus']
 
-    TrialProc = dataFrame['TrialProc']
-    AOI = dataFrame['AOI']
 
     TETTime = numpy.array(TETTime)
 
@@ -272,9 +168,8 @@ def GetDataColumns(dataFrame):
     ValidityRightEye = numpy.array(ValidityRightEye)
 
     TrialId = numpy.array(TrialId)
-
-    TrialProc = numpy.array(TrialProc)
-    AOI = numpy.array(AOI)
+    Images = numpy.array(Images)
+    AOIStimulus = numpy.array(AOIStimulus)
 
     TETTime = TETTime.reshape(TETTime.size, 1)
 
@@ -298,9 +193,8 @@ def GetDataColumns(dataFrame):
     ValidityRightEye = ValidityRightEye.reshape(ValidityRightEye.size, 1)
 
     TrialId = TrialId.reshape(TrialId.size, 1)
-
-    TrialProc = TrialProc.reshape(TrialProc.size, 1)
-    AOI = AOI.reshape(AOI.size, 1)
+    Images = Images.reshape(Images.size, 1)
+    AOIStimulus = AOIStimulus.reshape(AOIStimulus.size, 1)
 
     return TETTime, \
            CursorX, CursorY, \
@@ -308,5 +202,5 @@ def GetDataColumns(dataFrame):
            DiameterPupilLeftEye, DistanceLeftEye, ValidityLeftEye,\
            XGazePosRightEye, YGazePosRightEye, XCameraPosRightEye, YCameraPosRightEye, \
            DiameterPupilRightEye, DistanceRightEye,\
-           ValidityRightEye, TrialId, TrialProc, AOI
+           ValidityRightEye, TrialId, Images, AOIStimulus
 
